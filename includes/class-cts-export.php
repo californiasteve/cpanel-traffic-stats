@@ -388,11 +388,11 @@ class CTS_Export {
 			$html .= '<p style="font-size:12px;color:#646970;">' . esc_html( $report['tables_note'] ) . '</p>';
 		}
 
-		$html .= '<p style="margin:28px 0 8px;"><a href="' . esc_url( admin_url( 'index.php?page=' . CTS_Admin::STATS_PAGE ) ) . '" style="background:#2271b1;color:#fff;padding:9px 16px;border-radius:4px;text-decoration:none;display:inline-block;">' . esc_html__( 'View the full report', 'cpanel-traffic-stats' ) . '</a></p>';
+		$html .= '<p style="margin:28px 0 8px;"><a href="' . esc_url( CTS_Admin::page_url( CTS_Admin::STATS_PAGE ) ) . '" style="background:#2271b1;color:#fff;padding:9px 16px;border-radius:4px;text-decoration:none;display:inline-block;">' . esc_html__( 'View the full report', 'cpanel-traffic-stats' ) . '</a></p>';
 		$html .= '<p style="font-size:11px;color:#8c8f94;margin-top:24px;">' . esc_html(
 			sprintf(
 				/* translators: %s: site name */
-				__( 'Sent by the cPanel Traffic Stats plugin on %s. Change or stop this email under Dashboard > Email Reports.', 'cpanel-traffic-stats' ),
+				__( 'Sent by the cPanel Traffic Stats plugin on %s. Change or stop this email under Traffic Stats > Email Reports.', 'cpanel-traffic-stats' ),
 				get_bloginfo( 'name' )
 			)
 		) . '</p>';

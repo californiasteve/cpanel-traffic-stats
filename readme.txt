@@ -4,7 +4,7 @@ Tags: stats, analytics, awstats, webalizer, cpanel
 Requires at least: 5.8
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -26,8 +26,8 @@ cPanel already turns your server's access logs into traffic stats with AWStats a
 
 1. Upload the plugin folder to /wp-content/plugins/ or install the ZIP from Plugins > Add New.
 2. Activate it.
-3. Go to Settings > cPanel Traffic Stats, check the domain, choose where to read the stats from, and click Run test.
-4. Open Dashboard > Traffic Stats.
+3. Go to Traffic Stats > Settings in the admin menu, check the domain, choose where to read the stats from, and click Run test.
+4. Open Traffic Stats > Report.
 
 To use an API token, create one in cPanel under Security > Manage API Tokens.
 
@@ -43,9 +43,12 @@ cPanel keeps HTTP and HTTPS stats separately. When you combine them, unique visi
 
 == Changelog ==
 
+= 1.2.0 =
+* The plugin now has its own Traffic Stats menu in the admin sidebar, with Report, Email Reports and Settings underneath. Old links redirect to the new pages.
+
 = 1.1.0 =
 * Download reports as PDF or CSV (viewed month, preset periods, or custom dates).
-* Scheduled email reports under Dashboard > Email Reports: daily, weekly on chosen days, monthly on a date or the last day, or monthly on the Nth weekday (e.g. second Saturday, last Friday). Choose time, recipients, report period and attachments.
+* Scheduled email reports under Traffic Stats > Email Reports: daily, weekly on chosen days, monthly on a date or the last day, or monthly on the Nth weekday (e.g. second Saturday, last Friday). Choose time, recipients, report period and attachments.
 
 = 1.0.1 =
 * Connection test offers a "Use this domain" button when stats are filed under a different domain (common on Bluehost, where the main site uses the built-in mybluehost.me domain).
