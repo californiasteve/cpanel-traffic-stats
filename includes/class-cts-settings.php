@@ -216,7 +216,7 @@ class CTS_Settings {
 						<th scope="row"><label for="cts-domain"><?php esc_html_e( 'Domain', 'cpanel-traffic-stats' ); ?></label></th>
 						<td>
 							<input type="text" id="cts-domain" class="regular-text" name="<?php echo esc_attr( $name ); ?>[domain]" value="<?php echo esc_attr( $s['domain'] ); ?>" placeholder="example.com" />
-							<p class="description"><?php esc_html_e( 'The domain as it appears in cPanel (no www, no https://).', 'cpanel-traffic-stats' ); ?></p>
+							<p class="description"><?php esc_html_e( 'The domain as it appears in cPanel (no www, no https://). Some hosts, such as Bluehost, file the main website under a built-in domain like abc.xyz.mybluehost.me. Run the test below and it will list the domains that have stats.', 'cpanel-traffic-stats' ); ?></p>
 						</td>
 					</tr>
 					<tr>
