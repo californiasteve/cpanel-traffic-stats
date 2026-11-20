@@ -301,3 +301,80 @@
 		width: 64px;
 	}
 }
+
+/* Download panel */
+.cts-download summary {
+	cursor: pointer;
+	font-weight: 600;
+}
+
+.cts-download summary .dashicons {
+	vertical-align: text-bottom;
+}
+
+.cts-download-form {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin-top: 12px;
+}
+
+.cts-custom-dates {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+/* Email reports */
+.cts-schedules td {
+	vertical-align: top;
+}
+
+.cts-schedules {
+	min-width: 640px;
+	table-layout: auto;
+}
+
+.cts-sub {
+	color: var(--cts-muted);
+	font-size: 12px;
+	margin-top: 2px;
+}
+
+.cts-sub.cts-error {
+	color: var(--cts-down);
+}
+
+.cts-badge {
+	display: inline-block;
+	margin-left: 6px;
+	padding: 0 6px;
+	border-radius: 8px;
+	background: #f0f0f1;
+	color: var(--cts-muted);
+	font-size: 11px;
+}
+
+.cts-actions {
+	white-space: nowrap;
+	text-align: right;
+}
+
+.cts-actions form {
+	display: inline;
+	margin: 0 0 0 4px;
+}
+
+.cts-freq-opt {
+	margin-top: 10px;
+}
+
+.cts-day {
+	display: inline-block;
+	margin: 0 12px 6px 0;
+}
+
+.cts-schedule-form .form-table th {
+	width: 160px;
+}

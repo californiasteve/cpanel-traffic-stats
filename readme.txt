@@ -4,7 +4,7 @@ Tags: stats, analytics, awstats, webalizer, cpanel
 Requires at least: 5.8
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.0.1
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -16,6 +16,8 @@ cPanel already turns your server's access logs into traffic stats with AWStats a
 
 * A Traffic Stats report under Dashboard with visitors, visits, page views, hits and bandwidth, daily and hourly charts, top pages, referrers, search engines, search phrases, countries, browsers, operating systems, robots and errors.
 * A Dashboard widget with this month's summary.
+* Download reports as PDF or CSV for any period.
+* Scheduled email reports: daily, weekly, monthly on a date, or monthly on a weekday such as the second Saturday, with PDF/CSV attachments.
 * Reads the stats files directly when WordPress is on the same cPanel account, or connects to cPanel with an API token from anywhere.
 * Combines HTTP and HTTPS stats.
 * Caches results, with a Refresh button and a connection test.
@@ -40,6 +42,10 @@ Turn on AWStats or Webalizer in cPanel (Metrics > Metrics Editor) and wait for c
 cPanel keeps HTTP and HTTPS stats separately. When you combine them, unique visitors are added together. Choose "HTTPS only" in the settings to match a single AWStats report.
 
 == Changelog ==
+
+= 1.1.0 =
+* Download reports as PDF or CSV (viewed month, preset periods, or custom dates).
+* Scheduled email reports under Dashboard > Email Reports: daily, weekly on chosen days, monthly on a date or the last day, or monthly on the Nth weekday (e.g. second Saturday, last Friday). Choose time, recipients, report period and attachments.
 
 = 1.0.1 =
 * Connection test offers a "Use this domain" button when stats are filed under a different domain (common on Bluehost, where the main site uses the built-in mybluehost.me domain).

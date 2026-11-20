@@ -26,6 +26,7 @@ class CTS_Admin {
 		add_action( 'admin_post_cts_test', array( __CLASS__, 'handle_test' ) );
 		add_action( 'admin_post_cts_refresh', array( __CLASS__, 'handle_refresh' ) );
 		add_action( 'admin_post_cts_use_domain', array( __CLASS__, 'handle_use_domain' ) );
+		add_action( 'admin_post_cts_export', array( __CLASS__, 'handle_export' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename( CTS_FILE ), array( __CLASS__, 'action_links' ) );
 	}
 
@@ -85,7 +86,7 @@ class CTS_Admin {
 	 * @param string $hook Current admin page.
 	 */
 	public static function assets( $hook ) {
-		$pages = array( 'index.php', 'dashboard_page_' . self::STATS_PAGE, 'settings_page_' . CTS_Settings::PAGE );
+		$pages = array( 'index.php', 'dashboard_page_' . self::STATS_PAGE, 'dashboard_page_' . CTS_Schedules::PAGE, 'settings_page_' . CTS_Settings::PAGE );
 		if ( ! in_array( $hook, $pages, true ) ) {
 			return;
 		}
@@ -417,6 +418,7 @@ class CTS_Admin {
 						<button type="submit" class="button"><span class="dashicons dashicons-update" aria-hidden="true"></span> <?php esc_html_e( 'Refresh', 'cpanel-traffic-stats' ); ?></button>
 					</form>
 					<?php if ( current_user_can( 'manage_options' ) ) : ?>
+						<a class="button" href="<?php echo esc_url( admin_url( 'index.php?page=' . CTS_Schedules::PAGE ) ); ?>"><?php esc_html_e( 'Email reports', 'cpanel-traffic-stats' ); ?></a>
 						<a class="button" href="<?php echo esc_url( admin_url( 'options-general.php?page=' . CTS_Settings::PAGE ) ); ?>"><?php esc_html_e( 'Settings', 'cpanel-traffic-stats' ); ?></a>
 					<?php endif; ?>
 				</div>
@@ -427,6 +429,7 @@ class CTS_Admin {
 			} elseif ( ! $options ) {
 				self::notice( self::no_data_message( $stats ), false );
 			} else {
+				self::render_download_panel( $ym );
 				if ( $stats->uses( 'awstats' ) ) {
 					self::render_awstats_section( $stats, $ym, $options );
 				}
@@ -437,6 +440,84 @@ class CTS_Admin {
 			?>
 		</div>
 		<?php
+	}
+
+	/**
+	 * "Download report" panel: PDF or CSV for the shown month, a preset period or custom dates.
+	 *
+	 * @param string $ym Month being viewed.
+	 */
+	private static function render_download_panel( $ym ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display only.
+		$error = isset( $_GET['export_error'] ) ? sanitize_text_field( rawurldecode( wp_unslash( $_GET['export_error'] ) ) ) : '';
+		?>
+		<details class="cts-panel cts-download"<?php echo $error ? ' open' : ''; ?>>
+			<summary><span class="dashicons dashicons-download" aria-hidden="true"></span> <?php esc_html_e( 'Download report (PDF or CSV)', 'cpanel-traffic-stats' ); ?></summary>
+			<?php if ( $error ) : ?>
+				<div class="notice notice-error inline"><p><?php echo esc_html( $error ); ?></p></div>
+			<?php endif; ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="cts-download-form">
+				<input type="hidden" name="action" value="cts_export" />
+				<input type="hidden" name="month" value="<?php echo esc_attr( $ym ); ?>" />
+				<?php wp_nonce_field( 'cts_export' ); ?>
+				<label for="cts-x-period"><?php esc_html_e( 'Period', 'cpanel-traffic-stats' ); ?></label>
+				<select id="cts-x-period" name="period" data-cts-export-period>
+					<option value="<?php echo esc_attr( 'month:' . $ym ); ?>"><?php echo esc_html( self::month_label( $ym ) ); ?></option>
+					<?php foreach ( CTS_Report::periods() as $key => $label ) : ?>
+						<option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></option>
+					<?php endforeach; ?>
+					<option value="custom"><?php esc_html_e( 'Custom dates…', 'cpanel-traffic-stats' ); ?></option>
+				</select>
+				<span class="cts-custom-dates" hidden>
+					<label for="cts-x-from" class="screen-reader-text"><?php esc_html_e( 'From', 'cpanel-traffic-stats' ); ?></label>
+					<input type="date" id="cts-x-from" name="from" value="<?php echo esc_attr( $ym . '-01' ); ?>" />
+					<span aria-hidden="true">–</span>
+					<label for="cts-x-to" class="screen-reader-text"><?php esc_html_e( 'To', 'cpanel-traffic-stats' ); ?></label>
+					<input type="date" id="cts-x-to" name="to" value="<?php echo esc_attr( wp_date( 'Y-m-d' ) ); ?>" />
+				</span>
+				<button type="submit" name="format" value="pdf" class="button button-primary"><?php esc_html_e( 'Download PDF', 'cpanel-traffic-stats' ); ?></button>
+				<button type="submit" name="format" value="csv" class="button"><?php esc_html_e( 'Download CSV', 'cpanel-traffic-stats' ); ?></button>
+			</form>
+		</details>
+		<?php
+	}
+
+	/**
+	 * Stream a PDF or CSV download.
+	 */
+	public static function handle_export() {
+		if ( ! current_user_can( self::view_cap() ) ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to do that.', 'cpanel-traffic-stats' ) );
+		}
+		check_admin_referer( 'cts_export' );
+
+		$format = isset( $_POST['format'] ) && 'csv' === $_POST['format'] ? 'csv' : 'pdf';
+		$period = isset( $_POST['period'] ) ? sanitize_text_field( wp_unslash( $_POST['period'] ) ) : '';
+		$from   = isset( $_POST['from'] ) ? sanitize_text_field( wp_unslash( $_POST['from'] ) ) : '';
+		$to     = isset( $_POST['to'] ) ? sanitize_text_field( wp_unslash( $_POST['to'] ) ) : '';
+		$month  = isset( $_POST['month'] ) ? sanitize_text_field( wp_unslash( $_POST['month'] ) ) : '';
+
+		$range  = CTS_Report::range( $period, null, $from, $to );
+		$report = is_wp_error( $range ) ? $range : CTS_Report::build( new CTS_Stats(), $range[0], $range[1] );
+		if ( is_wp_error( $report ) ) {
+			$args = array(
+				'page'         => self::STATS_PAGE,
+				'export_error' => rawurlencode( $report->get_error_message() ),
+			);
+			if ( preg_match( '/^\d{4}-\d{2}$/', $month ) ) {
+				$args['month'] = $month;
+			}
+			wp_safe_redirect( add_query_arg( $args, admin_url( 'index.php' ) ) );
+			exit;
+		}
+
+		$body = 'csv' === $format ? CTS_Export::csv( $report ) : CTS_Export::pdf( $report );
+		nocache_headers();
+		header( 'Content-Type: ' . ( 'csv' === $format ? 'text/csv; charset=utf-8' : 'application/pdf' ) );
+		header( 'Content-Disposition: attachment; filename="' . CTS_Export::filename( $report, $format ) . '"' );
+		header( 'Content-Length: ' . strlen( $body ) );
+		echo $body; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- binary file download.
+		exit;
 	}
 
 	/**

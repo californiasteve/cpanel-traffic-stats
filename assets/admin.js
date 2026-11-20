@@ -56,4 +56,49 @@
 		} );
 		toggle();
 	}
+
+	// Export: show date fields for a custom range.
+	document.querySelectorAll( '[data-cts-export-period]' ).forEach( function ( sel ) {
+		var dates = sel.form.querySelector( '.cts-custom-dates' );
+		var sync = function () {
+			dates.hidden = sel.value !== 'custom';
+		};
+		sel.addEventListener( 'change', sync );
+		sync();
+	} );
+
+	// Email report form: show the options for the chosen frequency, and
+	// suggest a matching period until the person picks one themselves.
+	document.querySelectorAll( '[data-cts-frequency]' ).forEach( function ( freq ) {
+		var form = freq.form;
+		var period = form.querySelector( '[data-cts-period]' );
+		var touched = false;
+		var suggest = { daily: 'yesterday', weekly: 'last_7_days', monthly_day: 'last_month', monthly_nth: 'last_month' };
+		if ( period ) {
+			period.addEventListener( 'change', function () {
+				touched = true;
+			} );
+		}
+		var sync = function ( fromChange ) {
+			form.querySelectorAll( '[data-cts-for]' ).forEach( function ( el ) {
+				el.hidden = el.getAttribute( 'data-cts-for' ) !== freq.value;
+			} );
+			if ( fromChange && period && ! touched && suggest[ freq.value ] ) {
+				period.value = suggest[ freq.value ];
+			}
+		};
+		freq.addEventListener( 'change', function () {
+			sync( true );
+		} );
+		sync( false );
+	} );
+
+	// Confirm before deleting.
+	document.querySelectorAll( 'form.cts-confirm' ).forEach( function ( f ) {
+		f.addEventListener( 'submit', function ( e ) {
+			if ( ! window.confirm( f.getAttribute( 'data-confirm' ) ) ) {
+				e.preventDefault();
+			}
+		} );
+	} );
 } )();

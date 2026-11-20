@@ -12,6 +12,12 @@ See your website traffic from cPanel's **AWStats** and **Webalizer** right insid
   - Top pages, referring sites, search engines, search phrases, countries, browsers, operating systems, robots, HTTP errors and 404 URLs
   - Webalizer daily chart and 12-month history table
 - **Dashboard widget** with this month's summary and a daily sparkline
+- **Download reports as PDF or CSV** for the month you're viewing, a preset period (yesterday, last 7 days, last week, last 30 days, this month so far, last month) or any custom dates
+- **Scheduled email reports** (Dashboard → Email Reports): send to any list of addresses
+  - daily, weekly on chosen days, monthly on a date (or the last day), or monthly on a weekday such as *the second Saturday* or *the last Friday*
+  - choose the send time, the period the report covers, and whether to attach the PDF, the CSV or both
+  - the email itself shows the summary with changes and the top pages, referrers and search engines
+  - pause, edit, delete, or **Send now** to test
 - Two ways to get the data:
   - **Local files**: WordPress runs on the same cPanel account, so the plugin reads `~/tmp/awstats` and `~/tmp/webalizer` directly. The home folder is detected automatically.
   - **cPanel API token**: connects to any cPanel server over UAPI (`Fileman::list_files` / `Fileman::get_file_content`) so WordPress can live somewhere else.
@@ -23,6 +29,10 @@ See your website traffic from cPanel's **AWStats** and **Webalizer** right insid
 - No JavaScript libraries or external requests; charts are inline SVG
 
 <img src="docs/screenshot-widget.png" alt="Dashboard widget" width="360">
+
+![Email Reports](docs/screenshot-email-reports.png)
+
+See a [sample PDF report](docs/sample-report.pdf) made from the test data.
 
 ## Requirements
 
@@ -51,12 +61,22 @@ If WordPress is installed in the cPanel account whose stats you want (for exampl
 
 The token gives full access to the cPanel account, so treat it like a password. The plugin only uses it to read files under `~/tmp/awstats` and `~/tmp/webalizer*`.
 
+## Reports and scheduled emails
+
+- Totals for any date range are added up from AWStats' (or Webalizer's) daily figures. Unique visitors only exist per month, so they appear for whole-month reports only.
+- Each report compares with the period just before it: the previous 7 days, the previous month, and so on. A month still in progress is compared with the same days of the previous month.
+- AWStats only keeps the top lists (pages, referrers, ...) per month, so a report covering part of a month shows that month's lists and says so.
+- CSV files open directly in Excel or Google Sheets. Text that came from visitors (referrers, search phrases) is escaped so it can't run as a spreadsheet formula.
+- Emails go out through `wp_mail()`, so an SMTP plugin is recommended if your host's mail is unreliable. WordPress's scheduler only runs when the site gets visits; for exact timing, turn off WP-Cron's page-load trigger and add a cPanel cron job for `wp-cron.php` (every 15 minutes is plenty).
+
 ## Where cPanel keeps the stats
 
 | Program | HTTP | HTTPS |
 | --- | --- | --- |
 | AWStats | `~/tmp/awstats/awstatsMMYYYY.domain.txt` | `~/tmp/awstats/ssl/awstatsMMYYYY.domain.txt` |
 | Webalizer | `~/tmp/webalizer/webalizer.hist`, `usage_YYYYMM.html` | `~/tmp/webalizerssl/…` |
+
+On some hosts (Bluehost, for example) the main website's stats are filed under the account's built-in domain, such as `abc.xyz.mybluehost.me`, rather than your own domain. **Run test** lists the domains that have data and lets you switch with one click.
 
 The plugin parses AWStats' data files directly (the same database AWStats uses to draw its own pages), and Webalizer's `webalizer.hist` monthly totals plus the daily table in `usage_YYYYMM.html`.
 
