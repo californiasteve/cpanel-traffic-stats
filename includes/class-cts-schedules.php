@@ -1,6 +1,7 @@
 <?php
 /**
- * Scheduled email reports: storage, date rules, sending, and the admin screen.
+ * Scheduled email reports: storage, date rules, sending, and the admin screen
+ * (shown under the plugin's Traffic Stats menu).
  *
  * Frequencies:
  *   daily        every day at a time
@@ -33,7 +34,6 @@ class CTS_Schedules {
 		add_filter( 'cron_schedules', array( __CLASS__, 'cron_interval' ) ); // phpcs:ignore WordPress.WP.CronInterval.CronSchedulesInterval
 		add_action( self::HOOK, array( __CLASS__, 'tick' ) );
 		add_action( 'init', array( __CLASS__, 'ensure_cron' ) );
-		add_action( 'admin_menu', array( __CLASS__, 'menu' ) );
 		add_action( 'admin_post_cts_schedule_save', array( __CLASS__, 'handle_save' ) );
 		add_action( 'admin_post_cts_schedule_delete', array( __CLASS__, 'handle_delete' ) );
 		add_action( 'admin_post_cts_schedule_send', array( __CLASS__, 'handle_send_now' ) );
@@ -437,19 +437,6 @@ class CTS_Schedules {
 	 * ------------------------------------------------------------------- */
 
 	/**
-	 * Menu entry.
-	 */
-	public static function menu() {
-		add_dashboard_page(
-			__( 'Email Reports', 'cpanel-traffic-stats' ),
-			__( 'Email Reports', 'cpanel-traffic-stats' ),
-			'manage_options',
-			self::PAGE,
-			array( __CLASS__, 'render_page' )
-		);
-	}
-
-	/**
 	 * Save a schedule.
 	 */
 	public static function handle_save() {
@@ -514,7 +501,7 @@ class CTS_Schedules {
 	 * @param array $args Query args.
 	 */
 	private static function redirect( array $args ) {
-		wp_safe_redirect( add_query_arg( array_merge( array( 'page' => self::PAGE ), $args ), admin_url( 'index.php' ) ) );
+		wp_safe_redirect( CTS_Admin::page_url( self::PAGE, $args ) );
 		exit;
 	}
 
@@ -539,7 +526,7 @@ class CTS_Schedules {
 			<div class="cts-header">
 				<h1><?php esc_html_e( 'Email Reports', 'cpanel-traffic-stats' ); ?></h1>
 				<div class="cts-toolbar">
-					<a class="button" href="<?php echo esc_url( admin_url( 'index.php?page=' . CTS_Admin::STATS_PAGE ) ); ?>"><?php esc_html_e( 'Traffic Stats', 'cpanel-traffic-stats' ); ?></a>
+					<a class="button" href="<?php echo esc_url( CTS_Admin::page_url( CTS_Admin::STATS_PAGE ) ); ?>"><?php esc_html_e( 'Traffic Stats', 'cpanel-traffic-stats' ); ?></a>
 				</div>
 			</div>
 
@@ -598,7 +585,7 @@ class CTS_Schedules {
 										?>
 									</td>
 									<td class="cts-actions">
-										<a class="button button-small" href="<?php echo esc_url( add_query_arg( array( 'page' => self::PAGE, 'edit' => $id ), admin_url( 'index.php' ) ) ); ?>"><?php esc_html_e( 'Edit', 'cpanel-traffic-stats' ); ?></a>
+										<a class="button button-small" href="<?php echo esc_url( CTS_Admin::page_url( self::PAGE, array( 'edit' => $id ) ) ); ?>"><?php esc_html_e( 'Edit', 'cpanel-traffic-stats' ); ?></a>
 										<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 											<input type="hidden" name="action" value="cts_schedule_send" />
 											<input type="hidden" name="id" value="<?php echo esc_attr( $id ); ?>" />
@@ -618,7 +605,7 @@ class CTS_Schedules {
 						</table>
 						</div>
 					<?php endif; ?>
-					<p><a class="button button-primary" href="<?php echo esc_url( add_query_arg( array( 'page' => self::PAGE, 'edit' => 'new' ), admin_url( 'index.php' ) ) ); ?>"><?php esc_html_e( 'Add email report', 'cpanel-traffic-stats' ); ?></a></p>
+					<p><a class="button button-primary" href="<?php echo esc_url( CTS_Admin::page_url( self::PAGE, array( 'edit' => 'new' ) ) ); ?>"><?php esc_html_e( 'Add email report', 'cpanel-traffic-stats' ); ?></a></p>
 				</div>
 				<p class="description"><?php esc_html_e( 'Emails are sent by WordPress\'s scheduler, which runs when someone visits the site. On quiet sites an email can arrive a little late; setting up a real cron job in cPanel for wp-cron.php makes it punctual. Times use the site time zone from Settings > General.', 'cpanel-traffic-stats' ); ?></p>
 			<?php else : ?>
@@ -747,7 +734,7 @@ class CTS_Schedules {
 			</table>
 			<p class="submit">
 				<button type="submit" class="button button-primary"><?php esc_html_e( 'Save email report', 'cpanel-traffic-stats' ); ?></button>
-				<a class="button" href="<?php echo esc_url( admin_url( 'index.php?page=' . self::PAGE ) ); ?>"><?php esc_html_e( 'Cancel', 'cpanel-traffic-stats' ); ?></a>
+				<a class="button" href="<?php echo esc_url( CTS_Admin::page_url( self::PAGE ) ); ?>"><?php esc_html_e( 'Cancel', 'cpanel-traffic-stats' ); ?></a>
 			</p>
 		</form>
 		<?php

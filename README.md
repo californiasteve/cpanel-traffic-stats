@@ -6,14 +6,15 @@ See your website traffic from cPanel's **AWStats** and **Webalizer** right insid
 
 ## Features
 
-- **Dashboard → Traffic Stats** report page with a month picker:
+- Its own **Traffic Stats** menu in the WordPress admin sidebar, with **Report**, **Email Reports** and **Settings** underneath
+- **Report** page with a month picker:
   - Unique visitors, visits, page views, hits and bandwidth, with change against the previous month (in-progress months are compared with the same number of days)
   - Daily traffic chart (visits / page views / hits) and page views by hour
   - Top pages, referring sites, search engines, search phrases, countries, browsers, operating systems, robots, HTTP errors and 404 URLs
   - Webalizer daily chart and 12-month history table
 - **Dashboard widget** with this month's summary and a daily sparkline
 - **Download reports as PDF or CSV** for the month you're viewing, a preset period (yesterday, last 7 days, last week, last 30 days, this month so far, last month) or any custom dates
-- **Scheduled email reports** (Dashboard → Email Reports): send to any list of addresses
+- **Scheduled email reports** (Traffic Stats → Email Reports): send to any list of addresses
   - daily, weekly on chosen days, monthly on a date (or the last day), or monthly on a weekday such as *the second Saturday* or *the last Friday*
   - choose the send time, the period the report covers, and whether to attach the PDF, the CSV or both
   - the email itself shows the summary with changes and the top pages, referrers and search engines
@@ -43,8 +44,8 @@ See a [sample PDF report](docs/sample-report.pdf) made from the test data.
 
 1. Download this repository as a ZIP (**Code → Download ZIP**) and upload it in **Plugins → Add New → Upload Plugin**, or copy the folder into `wp-content/plugins/cpanel-traffic-stats`.
 2. Activate **cPanel Traffic Stats**.
-3. Go to **Settings → cPanel Traffic Stats**, check the domain and choose a source (below).
-4. Click **Run test**, then open **Dashboard → Traffic Stats**.
+3. Go to **Traffic Stats → Settings** in the admin menu, check the domain and choose a source (below).
+4. Click **Run test**, then open **Traffic Stats → Report**.
 
 ### Option A: local files (same server)
 

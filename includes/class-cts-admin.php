@@ -46,23 +46,85 @@ class CTS_Admin {
 	}
 
 	/**
-	 * Menus.
+	 * URL of one of the plugin's admin pages.
+	 *
+	 * @param string $slug Page slug.
+	 * @param array  $args Extra query args.
+	 * @return string
+	 */
+	public static function page_url( $slug, array $args = array() ) {
+		return add_query_arg( array_merge( array( 'page' => $slug ), $args ), admin_url( 'admin.php' ) );
+	}
+
+	/**
+	 * Slugs of the plugin's admin pages.
+	 *
+	 * @return string[]
+	 */
+	public static function page_slugs() {
+		return array( self::STATS_PAGE, CTS_Schedules::PAGE, CTS_Settings::PAGE );
+	}
+
+	/**
+	 * Top-level "Traffic Stats" menu with Report, Email Reports and Settings below it.
 	 */
 	public static function menu() {
-		add_dashboard_page(
+		$cap = self::view_cap();
+		add_menu_page(
 			__( 'Traffic Stats', 'cpanel-traffic-stats' ),
 			__( 'Traffic Stats', 'cpanel-traffic-stats' ),
-			self::view_cap(),
+			$cap,
+			self::STATS_PAGE,
+			array( __CLASS__, 'render_stats_page' ),
+			'dashicons-chart-area',
+			3
+		);
+		add_submenu_page(
+			self::STATS_PAGE,
+			__( 'Traffic Stats', 'cpanel-traffic-stats' ),
+			__( 'Report', 'cpanel-traffic-stats' ),
+			$cap,
 			self::STATS_PAGE,
 			array( __CLASS__, 'render_stats_page' )
 		);
-		add_options_page(
-			__( 'cPanel Traffic Stats', 'cpanel-traffic-stats' ),
-			__( 'cPanel Traffic Stats', 'cpanel-traffic-stats' ),
+		add_submenu_page(
+			self::STATS_PAGE,
+			__( 'Email Reports', 'cpanel-traffic-stats' ),
+			__( 'Email Reports', 'cpanel-traffic-stats' ),
+			'manage_options',
+			CTS_Schedules::PAGE,
+			array( 'CTS_Schedules', 'render_page' )
+		);
+		add_submenu_page(
+			self::STATS_PAGE,
+			__( 'cPanel Traffic Stats Settings', 'cpanel-traffic-stats' ),
+			__( 'Settings', 'cpanel-traffic-stats' ),
 			'manage_options',
 			CTS_Settings::PAGE,
 			array( 'CTS_Settings', 'render_page' )
 		);
+		self::redirect_old_urls();
+	}
+
+	/**
+	 * Version 1.1 and earlier put the pages under Dashboard and Settings.
+	 * Send old bookmarks and links in emails already sent to the new location.
+	 */
+	private static function redirect_old_urls() {
+		global $pagenow;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only redirect.
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+		if ( in_array( $pagenow, array( 'index.php', 'options-general.php' ), true ) && in_array( $page, self::page_slugs(), true ) ) {
+			$args = array();
+			foreach ( array( 'month', 'edit' ) as $key ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				if ( isset( $_GET[ $key ] ) ) {
+					$args[ $key ] = sanitize_text_field( wp_unslash( $_GET[ $key ] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				}
+			}
+			wp_safe_redirect( self::page_url( $page, $args ) );
+			exit;
+		}
 	}
 
 	/**
@@ -74,8 +136,8 @@ class CTS_Admin {
 	public static function action_links( $links ) {
 		array_unshift(
 			$links,
-			'<a href="' . esc_url( admin_url( 'options-general.php?page=' . CTS_Settings::PAGE ) ) . '">' . esc_html__( 'Settings', 'cpanel-traffic-stats' ) . '</a>',
-			'<a href="' . esc_url( admin_url( 'index.php?page=' . self::STATS_PAGE ) ) . '">' . esc_html__( 'View stats', 'cpanel-traffic-stats' ) . '</a>'
+			'<a href="' . esc_url( self::page_url( CTS_Settings::PAGE ) ) . '">' . esc_html__( 'Settings', 'cpanel-traffic-stats' ) . '</a>',
+			'<a href="' . esc_url( self::page_url( self::STATS_PAGE ) ) . '">' . esc_html__( 'View stats', 'cpanel-traffic-stats' ) . '</a>'
 		);
 		return $links;
 	}
@@ -86,8 +148,9 @@ class CTS_Admin {
 	 * @param string $hook Current admin page.
 	 */
 	public static function assets( $hook ) {
-		$pages = array( 'index.php', 'dashboard_page_' . self::STATS_PAGE, 'dashboard_page_' . CTS_Schedules::PAGE, 'settings_page_' . CTS_Settings::PAGE );
-		if ( ! in_array( $hook, $pages, true ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- only picks which assets to load.
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+		if ( 'index.php' !== $hook && ! in_array( $page, self::page_slugs(), true ) ) {
 			return;
 		}
 		wp_enqueue_style( 'cts-admin', CTS_URL . 'assets/admin.css', array(), CTS_VERSION );
@@ -112,7 +175,7 @@ class CTS_Admin {
 		if ( preg_match( '/^\d{4}-\d{2}$/', $month ) ) {
 			$args['month'] = $month;
 		}
-		wp_safe_redirect( add_query_arg( $args, admin_url( 'index.php' ) ) );
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
 		exit;
 	}
 
@@ -208,7 +271,7 @@ class CTS_Admin {
 		}
 
 		set_transient( 'cts_test_' . get_current_user_id(), $lines, 10 * MINUTE_IN_SECONDS );
-		wp_safe_redirect( admin_url( 'options-general.php?page=' . CTS_Settings::PAGE . '#cts-test' ) );
+		wp_safe_redirect( self::page_url( CTS_Settings::PAGE ) . '#cts-test' );
 		exit;
 	}
 
@@ -284,7 +347,7 @@ class CTS_Admin {
 	 */
 	public static function render_widget() {
 		$stats = new CTS_Stats();
-		$link  = admin_url( 'index.php?page=' . self::STATS_PAGE );
+		$link  = self::page_url( self::STATS_PAGE );
 
 		if ( $stats->uses( 'awstats' ) ) {
 			$months = $stats->awstats_months();
@@ -400,7 +463,7 @@ class CTS_Admin {
 				</h1>
 				<div class="cts-toolbar">
 					<?php if ( $options ) : ?>
-						<form method="get" action="<?php echo esc_url( admin_url( 'index.php' ) ); ?>">
+						<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
 							<input type="hidden" name="page" value="<?php echo esc_attr( self::STATS_PAGE ); ?>" />
 							<label for="cts-month" class="screen-reader-text"><?php esc_html_e( 'Month', 'cpanel-traffic-stats' ); ?></label>
 							<select id="cts-month" name="month" class="cts-autosubmit">
@@ -418,8 +481,8 @@ class CTS_Admin {
 						<button type="submit" class="button"><span class="dashicons dashicons-update" aria-hidden="true"></span> <?php esc_html_e( 'Refresh', 'cpanel-traffic-stats' ); ?></button>
 					</form>
 					<?php if ( current_user_can( 'manage_options' ) ) : ?>
-						<a class="button" href="<?php echo esc_url( admin_url( 'index.php?page=' . CTS_Schedules::PAGE ) ); ?>"><?php esc_html_e( 'Email reports', 'cpanel-traffic-stats' ); ?></a>
-						<a class="button" href="<?php echo esc_url( admin_url( 'options-general.php?page=' . CTS_Settings::PAGE ) ); ?>"><?php esc_html_e( 'Settings', 'cpanel-traffic-stats' ); ?></a>
+						<a class="button" href="<?php echo esc_url( self::page_url( CTS_Schedules::PAGE ) ); ?>"><?php esc_html_e( 'Email reports', 'cpanel-traffic-stats' ); ?></a>
+						<a class="button" href="<?php echo esc_url( self::page_url( CTS_Settings::PAGE ) ); ?>"><?php esc_html_e( 'Settings', 'cpanel-traffic-stats' ); ?></a>
 					<?php endif; ?>
 				</div>
 			</div>
@@ -507,7 +570,7 @@ class CTS_Admin {
 			if ( preg_match( '/^\d{4}-\d{2}$/', $month ) ) {
 				$args['month'] = $month;
 			}
-			wp_safe_redirect( add_query_arg( $args, admin_url( 'index.php' ) ) );
+			wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
 			exit;
 		}
 
@@ -1090,7 +1153,7 @@ class CTS_Admin {
 	private static function notice( $message, $error ) {
 		printf( '<div class="notice inline notice-%s"><p>%s</p></div>', $error ? 'error' : 'info', esc_html( $message ) );
 		if ( current_user_can( 'manage_options' ) ) {
-			printf( '<p><a href="%s">%s</a></p>', esc_url( admin_url( 'options-general.php?page=' . CTS_Settings::PAGE ) ), esc_html__( 'Check the plugin settings', 'cpanel-traffic-stats' ) );
+			printf( '<p><a href="%s">%s</a></p>', esc_url( self::page_url( CTS_Settings::PAGE ) ), esc_html__( 'Check the plugin settings', 'cpanel-traffic-stats' ) );
 		}
 	}
 
