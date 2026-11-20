@@ -276,6 +276,17 @@
 	color: var(--cts-up);
 }
 
+.cts-test-suggest {
+	padding-left: 26px;
+}
+
+.cts-test-suggest form {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	margin: 0;
+}
+
 .cts-test-error .dashicons {
 	color: var(--cts-down);
 }

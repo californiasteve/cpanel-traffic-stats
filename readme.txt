@@ -4,7 +4,7 @@ Tags: stats, analytics, awstats, webalizer, cpanel
 Requires at least: 5.8
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,9 @@ Turn on AWStats or Webalizer in cPanel (Metrics > Metrics Editor) and wait for c
 cPanel keeps HTTP and HTTPS stats separately. When you combine them, unique visitors are added together. Choose "HTTPS only" in the settings to match a single AWStats report.
 
 == Changelog ==
+
+= 1.0.1 =
+* Connection test offers a "Use this domain" button when stats are filed under a different domain (common on Bluehost, where the main site uses the built-in mybluehost.me domain).
 
 = 1.0.0 =
 * First release.

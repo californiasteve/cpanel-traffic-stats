@@ -25,6 +25,7 @@ class CTS_Admin {
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'assets' ) );
 		add_action( 'admin_post_cts_test', array( __CLASS__, 'handle_test' ) );
 		add_action( 'admin_post_cts_refresh', array( __CLASS__, 'handle_refresh' ) );
+		add_action( 'admin_post_cts_use_domain', array( __CLASS__, 'handle_use_domain' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename( CTS_FILE ), array( __CLASS__, 'action_links' ) );
 	}
 
@@ -122,6 +123,13 @@ class CTS_Admin {
 			wp_die( esc_html__( 'Sorry, you are not allowed to do that.', 'cpanel-traffic-stats' ) );
 		}
 		check_admin_referer( 'cts_test' );
+		self::run_test();
+	}
+
+	/**
+	 * Run the connection test, store the result for the settings page, and redirect there.
+	 */
+	private static function run_test() {
 		CTS_Stats::clear_cache();
 
 		$stats  = new CTS_Stats();
@@ -157,11 +165,14 @@ class CTS_Admin {
 				$domains = $stats->awstats_domains();
 				$msg     = sprintf( /* translators: %s: domain */ __( 'AWStats: no data files found for %s.', 'cpanel-traffic-stats' ), $s['domain'] );
 				if ( $domains ) {
-					$msg .= ' ' . sprintf( /* translators: %s: list of domains */ __( 'Domains that do have AWStats data: %s', 'cpanel-traffic-stats' ), implode( ', ', $domains ) );
+					$msg .= ' ' . __( 'Some hosts (Bluehost, for example) file the main website\'s stats under the account\'s built-in domain instead. AWStats has data for:', 'cpanel-traffic-stats' );
 				} else {
 					$msg .= ' ' . __( 'Make sure AWStats is turned on in cPanel (Metrics > Metrics Editor) and has run at least once.', 'cpanel-traffic-stats' );
 				}
 				$lines[] = array( 'error', $msg );
+				foreach ( $domains as $domain ) {
+					$lines[] = array( 'suggest', $domain );
+				}
 				$ok      = false;
 			} else {
 				$latest = key( $months );
@@ -201,6 +212,24 @@ class CTS_Admin {
 	}
 
 	/**
+	 * Switch the configured domain to one suggested by the test, then re-run the test.
+	 */
+	public static function handle_use_domain() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to do that.', 'cpanel-traffic-stats' ) );
+		}
+		check_admin_referer( 'cts_use_domain' );
+		$domain = isset( $_POST['domain'] ) ? strtolower( sanitize_text_field( wp_unslash( $_POST['domain'] ) ) ) : '';
+		if ( preg_match( '/^[a-z0-9.-]+$/', $domain ) ) {
+			$saved = get_option( CTS_Settings::OPTION, array() );
+			$saved = is_array( $saved ) ? $saved : array();
+			// Saved values go back through the settings sanitizer; the stored token is kept as is.
+			update_option( CTS_Settings::OPTION, array_merge( CTS_Settings::defaults(), $saved, array( 'domain' => $domain ) ) );
+		}
+		self::run_test();
+	}
+
+	/**
 	 * Show the last test result (once).
 	 */
 	public static function render_test_result() {
@@ -212,6 +241,17 @@ class CTS_Admin {
 		delete_transient( $key );
 		echo '<ul id="cts-test" class="cts-test">';
 		foreach ( $lines as $line ) {
+			if ( 'suggest' === $line[0] ) {
+				printf(
+					'<li class="cts-test-suggest"><form method="post" action="%1$s"><input type="hidden" name="action" value="cts_use_domain" /><input type="hidden" name="domain" value="%2$s" />%3$s<code>%4$s</code> <button type="submit" class="button button-small">%5$s</button></form></li>',
+					esc_url( admin_url( 'admin-post.php' ) ),
+					esc_attr( $line[1] ),
+					wp_nonce_field( 'cts_use_domain', '_wpnonce', true, false ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					esc_html( $line[1] ),
+					esc_html__( 'Use this domain', 'cpanel-traffic-stats' )
+				);
+				continue;
+			}
 			$icon = 'ok' === $line[0] ? 'yes-alt' : ( 'error' === $line[0] ? 'warning' : 'info-outline' );
 			printf(
 				'<li class="cts-test-%1$s"><span class="dashicons dashicons-%2$s" aria-hidden="true"></span> %3$s</li>',
